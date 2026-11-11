@@ -1,5 +1,13 @@
 """퀴즈 게임 전체를 관리하는 QuizGame 클래스"""
 
+import json
+from pathlib import Path
+
+from quiz import Quiz
+
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_QUIZ_PATH = BASE_DIR / "default_quizzes.json"
+
 LINE = "=" * 40
 MENU_MIN = 1
 MENU_MAX = 5
@@ -9,10 +17,33 @@ class QuizGame:
     """메뉴 표시, 입력 처리, 기능 분기를 담당하는 클래스"""
 
     def __init__(self):
-        self.quizzes = []
+        self.quizzes = self.load_default_quizzes()
         self.best_score = 0
         self.best_correct = 0
         self.best_total = 0
+
+    def load_default_quizzes(self):
+        """default_quizzes.json에서 기본 퀴즈를 읽어 Quiz 객체 리스트로 반환한다.
+
+        파일이 없거나 손상된 경우 안내 메시지를 출력하고 빈 리스트를 반환한다.
+        """
+        try:
+            with open(DEFAULT_QUIZ_PATH, "r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            quizzes = []
+            for item in data["quizzes"]:
+                quizzes.append(Quiz.from_dict(item))
+            return quizzes
+
+        except FileNotFoundError:
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 찾을 수 없습니다.")
+        except (json.JSONDecodeError, KeyError, TypeError):
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)이 손상되어 읽을 수 없습니다.")
+        except OSError:
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 읽는 중 오류가 발생했습니다.")
+
+        return []
 
     def run(self):
         """메뉴를 반복해서 보여 주고, 선택한 기능을 실행한다."""

@@ -1,0 +1,44 @@
+{
+    "quizzes": [
+        {
+            "question": "변경한 파일을 다음 커밋에 포함하도록 스테이징 영역에 올리는 Git 명령어는?",
+            "choices": ["commit", "add", "push", "init"],
+            "answer": 2
+        },
+        {
+            "question": "원격 저장소의 변경 사항을 가져와 현재 브랜치에 합치는 Git 명령어는?",
+            "choices": ["clone", "push", "merge", "pull"],
+            "answer": 4
+        },
+        {
+            "question": "원격 저장소 전체를 내 컴퓨터의 새 폴더로 복제하는 Git 명령어는?",
+            "choices": ["clone", "init", "pull", "checkout"],
+            "answer": 1
+        },
+        {
+            "question": "키(key)와 값(value)을 짝지어 데이터를 저장하는 Python 자료형은?",
+            "choices": ["list", "str", "dict", "bool"],
+            "answer": 3
+        },
+        {
+            "question": "Python에서 int(\"abc\")를 실행하면 발생하는 예외는?",
+            "choices": ["TypeError", "KeyError", "ValueError", "EOFError"],
+            "answer": 3
+        },
+        {
+            "question": "객체가 만들어질 때 자동으로 호출되어 속성을 초기화하는 메서드는?",
+            "choices": ["__str__", "__init__", "__call__", "__del__"],
+            "answer": 2
+        },
+        {
+            "question": "메서드의 첫 번째 매개변수로, 그 메서드를 호출한 객체 자신을 가리키는 것은?",
+            "choices": ["this", "cls", "super", "self"],
+            "answer": 4
+        },
+        {
+            "question": "프로그램 실행 중 사용자가 Ctrl+C를 누르면 발생하는 예외는?",
+            "choices": ["KeyboardInterrupt", "EOFError", "SystemExit", "ValueError"],
+            "answer": 1
+        }
+    ]
+}
