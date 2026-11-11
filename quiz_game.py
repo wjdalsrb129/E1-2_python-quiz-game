@@ -126,10 +126,13 @@ class QuizGame:
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {answer_text}입니다.")
 
         score = self.calculate_score(correct, total)
+        is_new_record = self.update_best_score(score, correct, total)
 
         print()
         print(LINE)
         print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
+        if is_new_record:
+            print("🎉 새로운 최고 점수입니다!")
         print(LINE)
 
     def calculate_score(self, correct, total):
@@ -180,5 +183,24 @@ class QuizGame:
         print("-" * 40)
 
     def show_score(self):
-        """점수 확인 (9단계에서 구현)"""
-        print("\n🚧 점수 확인 기능은 준비 중입니다.")
+        """최고 점수를 출력한다. 아직 퀴즈를 푼 기록이 없으면 안내한다."""
+        if self.best_total == 0:
+            print("\n⚠️ 아직 퀴즈를 푼 기록이 없습니다. 먼저 퀴즈를 풀어 보세요.")
+            return
+
+        print(
+            f"\n🏆 최고 점수: {self.best_score}점 "
+            f"({self.best_total}문제 중 {self.best_correct}문제 정답)"
+        )
+
+    def update_best_score(self, score, correct, total):
+        """이번 점수가 최고 점수보다 높으면 기록을 갱신하고 True를 반환한다.
+
+        첫 기록(best_total == 0)이면 점수와 관계없이 기록한다.
+        """
+        if self.best_total == 0 or score > self.best_score:
+            self.best_score = score
+            self.best_correct = correct
+            self.best_total = total
+            return True
+        return False
