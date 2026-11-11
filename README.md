@@ -275,7 +275,16 @@ E1-2_python-quiz-game/
 
 ### clone / pull 실습
 
-> 작성 예정
+미션 저장소를 별도 디렉터리에 clone한 뒤, 복제본에서 변경·push하고 기존 작업 디렉터리에서 pull로 가져오는 과정을 실습
+
+| 순서 | 위치 | 명령어 | 내용 |
+|---|---|---|---|
+| 1 | `mkj/` | `git clone <저장소 URL>` | `E1-2_python-quiz-game/` 폴더로 복제 |
+| 2 | `E1-2_python-quiz-game/` (복제본) | `git add` → `git commit` → `git push` | README에 이 섹션(clone/pull 실습 기록) 추가 |
+| 3 | `python-quiz-game/` (기존 작업 폴더) | `git pull` | 복제본에서 push한 커밋을 가져옴 |
+| 4 | `python-quiz-game/` | `git log --oneline` | 가져온 커밋과 README 변경이 반영되었는지 확인 |
+
+- 이 섹션은 복제본에서 작성되어, pull을 통해 기존 작업 폴더에 반영된 내용
 
 ### 커밋 그래프
 
