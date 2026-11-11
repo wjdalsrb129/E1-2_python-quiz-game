@@ -102,8 +102,28 @@ class QuizGame:
             return number
 
     def play_quiz(self):
-        """퀴즈 풀기 (6단계에서 구현)"""
-        print("\n🚧 퀴즈 풀기 기능은 준비 중입니다.")
+        """저장된 퀴즈를 순서대로 출제하고 정답/오답을 알려 준다."""
+        if not self.quizzes:
+            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
+            return
+
+        total = len(self.quizzes)
+        correct = 0
+
+        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
+
+        for number, quiz in enumerate(self.quizzes, start=1):
+            print()
+            print("-" * 40)
+            quiz.display(number)
+            user_answer = self.get_number_input("정답 입력: ", 1, 4)
+
+            if quiz.is_correct(user_answer):
+                print("✅ 정답입니다!")
+                correct += 1
+            else:
+                answer_text = quiz.choices[quiz.answer - 1]
+                print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {answer_text}입니다.")
 
     def add_quiz(self):
         """퀴즈 추가 (7단계에서 구현)"""
