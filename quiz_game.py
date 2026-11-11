@@ -168,8 +168,16 @@ class QuizGame:
             return text
 
     def list_quizzes(self):
-        """퀴즈 목록 (8단계에서 구현)"""
-        print("\n🚧 퀴즈 목록 기능은 준비 중입니다.")
+        """등록된 퀴즈의 문제 목록을 번호와 함께 출력한다."""
+        if not self.quizzes:
+            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
+            return
+
+        print(f"\n📋 등록된 퀴즈 목록 (총 {len(self.quizzes)}개)\n")
+        print("-" * 40)
+        for number, quiz in enumerate(self.quizzes, start=1):
+            print(f"[{number}] {quiz.question}")
+        print("-" * 40)
 
     def show_score(self):
         """점수 확인 (9단계에서 구현)"""
