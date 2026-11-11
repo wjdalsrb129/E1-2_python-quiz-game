@@ -3,18 +3,19 @@
 import json
 from pathlib import Path
 
-from quiz import Quiz
+from quiz import CHOICE_COUNT, Quiz
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_QUIZ_PATH = BASE_DIR / "default_quizzes.json"
 
 LINE = "=" * 40
+SEPARATOR = "-" * 40
 MENU_MIN = 1
 MENU_MAX = 5
 
 
 class QuizGame:
-    """메뉴 표시, 입력 처리, 기능 분기를 담당하는 클래스"""
+    """메뉴 진행, 퀴즈 기능, 점수 기록, 입력 처리, 데이터 불러오기를 담당하는 클래스"""
 
     def __init__(self):
         self.quizzes = self.load_default_quizzes()
@@ -22,29 +23,9 @@ class QuizGame:
         self.best_correct = 0
         self.best_total = 0
 
-    def load_default_quizzes(self):
-        """default_quizzes.json에서 기본 퀴즈를 읽어 Quiz 객체 리스트로 반환한다.
-
-        파일이 없거나 손상된 경우 안내 메시지를 출력하고 빈 리스트를 반환한다.
-        """
-        try:
-            with open(DEFAULT_QUIZ_PATH, "r", encoding="utf-8") as file:
-                data = json.load(file)
-
-            quizzes = []
-            for item in data["quizzes"]:
-                quizzes.append(Quiz.from_dict(item))
-            return quizzes
-
-        except FileNotFoundError:
-            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 찾을 수 없습니다.")
-        except (json.JSONDecodeError, KeyError, TypeError):
-            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)이 손상되어 읽을 수 없습니다.")
-        except OSError:
-            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 읽는 중 오류가 발생했습니다.")
-
-        return []
-
+    # ------------------------------------------------------------
+    # 1. 메뉴 진행
+    # ------------------------------------------------------------
     def run(self):
         """메뉴를 반복해서 보여 주고, 선택한 기능을 실행한다."""
         while True:
@@ -76,6 +57,118 @@ class QuizGame:
         print("5. 종료")
         print(LINE)
 
+    # ------------------------------------------------------------
+    # 2. 퀴즈 기능 (풀기 / 추가 / 목록 / 점수 확인)
+    # ------------------------------------------------------------
+    def play_quiz(self):
+        """저장된 퀴즈를 순서대로 출제하고, 결과와 최고 점수 갱신 여부를 알려 준다."""
+        if not self.quizzes:
+            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
+            return
+
+        total = len(self.quizzes)
+        correct = 0
+
+        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
+
+        for number, quiz in enumerate(self.quizzes, start=1):
+            if self.ask_question(number, quiz):
+                correct += 1
+
+        score = self.calculate_score(correct, total)
+        is_new_record = self.update_best_score(score, correct, total)
+        self.show_result(score, correct, total, is_new_record)
+
+    def ask_question(self, number, quiz):
+        """문제 1개를 출제하고 정답을 입력받아, 맞혔으면 True를 반환한다."""
+        print()
+        print(SEPARATOR)
+        quiz.display(number)
+        user_answer = self.get_number_input("정답 입력: ", 1, CHOICE_COUNT)
+
+        if quiz.is_correct(user_answer):
+            print("✅ 정답입니다!")
+            return True
+
+        print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {quiz.get_answer_text()}입니다.")
+        return False
+
+    def show_result(self, score, correct, total, is_new_record):
+        """퀴즈 결과를 출력한다."""
+        print()
+        print(LINE)
+        print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
+        if is_new_record:
+            print("🎉 새로운 최고 점수입니다!")
+        print(LINE)
+
+    def add_quiz(self):
+        """문제, 선택지, 정답 번호를 입력받아 새 퀴즈를 추가한다."""
+        print("\n📌 새로운 퀴즈를 추가합니다.\n")
+
+        question = self.get_text_input("문제를 입력하세요: ")
+
+        choices = []
+        for number in range(1, CHOICE_COUNT + 1):
+            choice = self.get_text_input(f"선택지 {number}: ")
+            choices.append(choice)
+
+        answer = self.get_number_input(f"정답 번호 (1-{CHOICE_COUNT}): ", 1, CHOICE_COUNT)
+
+        self.quizzes.append(Quiz(question, choices, answer))
+        print(f"\n✅ 퀴즈가 추가되었습니다! (현재 총 {len(self.quizzes)}개)")
+
+    def list_quizzes(self):
+        """등록된 퀴즈의 문제 목록을 번호와 함께 출력한다."""
+        if not self.quizzes:
+            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
+            return
+
+        print(f"\n📋 등록된 퀴즈 목록 (총 {len(self.quizzes)}개)\n")
+        print(SEPARATOR)
+        for number, quiz in enumerate(self.quizzes, start=1):
+            print(f"[{number}] {quiz.question}")
+        print(SEPARATOR)
+
+    def show_score(self):
+        """최고 점수를 출력한다. 아직 퀴즈를 푼 기록이 없으면 안내한다."""
+        if self.best_total == 0:
+            print("\n⚠️ 아직 퀴즈를 푼 기록이 없습니다. 먼저 퀴즈를 풀어 보세요.")
+            return
+
+        print(
+            f"\n🏆 최고 점수: {self.best_score}점 "
+            f"({self.best_total}문제 중 {self.best_correct}문제 정답)"
+        )
+
+    # ------------------------------------------------------------
+    # 3. 점수 계산 / 최고 점수 기록
+    # ------------------------------------------------------------
+    def calculate_score(self, correct, total):
+        """맞힌 개수와 전체 문제 수로 100점 만점 점수를 계산한다.
+
+        정답률 × 100을 사사오입 반올림한 정수를 반환한다.
+        (Python의 round()는 .5를 짝수 쪽으로 보내므로 사용하지 않는다.)
+        """
+        if total == 0:
+            return 0
+        return int(correct * 100 / total + 0.5)
+
+    def update_best_score(self, score, correct, total):
+        """이번 점수가 최고 점수보다 높으면 기록을 갱신하고 True를 반환한다.
+
+        첫 기록(best_total == 0)이면 점수와 관계없이 기록한다.
+        """
+        if self.best_total == 0 or score > self.best_score:
+            self.best_score = score
+            self.best_correct = correct
+            self.best_total = total
+            return True
+        return False
+
+    # ------------------------------------------------------------
+    # 4. 입력 처리 (검증)
+    # ------------------------------------------------------------
     def get_number_input(self, prompt, min_value, max_value):
         """min_value~max_value 범위의 정수를 입력받아 반환한다.
 
@@ -101,66 +194,6 @@ class QuizGame:
 
             return number
 
-    def play_quiz(self):
-        """저장된 퀴즈를 순서대로 출제하고 정답/오답을 알려 준다."""
-        if not self.quizzes:
-            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
-            return
-
-        total = len(self.quizzes)
-        correct = 0
-
-        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
-
-        for number, quiz in enumerate(self.quizzes, start=1):
-            print()
-            print("-" * 40)
-            quiz.display(number)
-            user_answer = self.get_number_input("정답 입력: ", 1, 4)
-
-            if quiz.is_correct(user_answer):
-                print("✅ 정답입니다!")
-                correct += 1
-            else:
-                answer_text = quiz.choices[quiz.answer - 1]
-                print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {answer_text}입니다.")
-
-        score = self.calculate_score(correct, total)
-        is_new_record = self.update_best_score(score, correct, total)
-
-        print()
-        print(LINE)
-        print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
-        if is_new_record:
-            print("🎉 새로운 최고 점수입니다!")
-        print(LINE)
-
-    def calculate_score(self, correct, total):
-        """맞힌 개수와 전체 문제 수로 100점 만점 점수를 계산한다.
-
-        정답률 × 100을 사사오입 반올림한 정수를 반환한다.
-        (Python의 round()는 .5를 짝수 쪽으로 보내므로 사용하지 않는다.)
-        """
-        if total == 0:
-            return 0
-        return int(correct * 100 / total + 0.5)
-
-    def add_quiz(self):
-        """문제, 선택지 4개, 정답 번호를 입력받아 새 퀴즈를 추가한다."""
-        print("\n📌 새로운 퀴즈를 추가합니다.\n")
-
-        question = self.get_text_input("문제를 입력하세요: ")
-
-        choices = []
-        for number in range(1, 5):
-            choice = self.get_text_input(f"선택지 {number}: ")
-            choices.append(choice)
-
-        answer = self.get_number_input("정답 번호 (1-4): ", 1, 4)
-
-        self.quizzes.append(Quiz(question, choices, answer))
-        print(f"\n✅ 퀴즈가 추가되었습니다! (현재 총 {len(self.quizzes)}개)")
-
     def get_text_input(self, prompt):
         """빈 값이 아닌 문자열을 입력받아 앞뒤 공백을 제거해 반환한다."""
         while True:
@@ -170,37 +203,28 @@ class QuizGame:
                 continue
             return text
 
-    def list_quizzes(self):
-        """등록된 퀴즈의 문제 목록을 번호와 함께 출력한다."""
-        if not self.quizzes:
-            print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
-            return
+    # ------------------------------------------------------------
+    # 5. 데이터 불러오기 / 저장
+    # ------------------------------------------------------------
+    def load_default_quizzes(self):
+        """default_quizzes.json에서 기본 퀴즈를 읽어 Quiz 객체 리스트로 반환한다.
 
-        print(f"\n📋 등록된 퀴즈 목록 (총 {len(self.quizzes)}개)\n")
-        print("-" * 40)
-        for number, quiz in enumerate(self.quizzes, start=1):
-            print(f"[{number}] {quiz.question}")
-        print("-" * 40)
-
-    def show_score(self):
-        """최고 점수를 출력한다. 아직 퀴즈를 푼 기록이 없으면 안내한다."""
-        if self.best_total == 0:
-            print("\n⚠️ 아직 퀴즈를 푼 기록이 없습니다. 먼저 퀴즈를 풀어 보세요.")
-            return
-
-        print(
-            f"\n🏆 최고 점수: {self.best_score}점 "
-            f"({self.best_total}문제 중 {self.best_correct}문제 정답)"
-        )
-
-    def update_best_score(self, score, correct, total):
-        """이번 점수가 최고 점수보다 높으면 기록을 갱신하고 True를 반환한다.
-
-        첫 기록(best_total == 0)이면 점수와 관계없이 기록한다.
+        파일이 없거나 손상된 경우 안내 메시지를 출력하고 빈 리스트를 반환한다.
         """
-        if self.best_total == 0 or score > self.best_score:
-            self.best_score = score
-            self.best_correct = correct
-            self.best_total = total
-            return True
-        return False
+        try:
+            with open(DEFAULT_QUIZ_PATH, "r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            quizzes = []
+            for item in data["quizzes"]:
+                quizzes.append(Quiz.from_dict(item))
+            return quizzes
+
+        except FileNotFoundError:
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 찾을 수 없습니다.")
+        except (json.JSONDecodeError, KeyError, TypeError):
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)이 손상되어 읽을 수 없습니다.")
+        except OSError:
+            print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 읽는 중 오류가 발생했습니다.")
+
+        return []

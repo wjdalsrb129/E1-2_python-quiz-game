@@ -1,13 +1,15 @@
 """개별 퀴즈를 표현하는 Quiz 클래스"""
 
+CHOICE_COUNT = 4  # 퀴즈 1개당 선택지 개수
+
 
 class Quiz:
-    """문제 1개와 선택지 4개, 정답 번호를 관리하는 클래스"""
+    """문제 1개와 선택지, 정답 번호를 관리하는 클래스"""
 
     def __init__(self, question, choices, answer):
         self.question = question  # 문제 (str)
-        self.choices = choices    # 선택지 4개 (list[str])
-        self.answer = answer      # 정답 번호 1~4 (int)
+        self.choices = choices    # 선택지 CHOICE_COUNT개 (list[str])
+        self.answer = answer      # 정답 번호 1~CHOICE_COUNT (int)
 
     def display(self, number):
         """문제 번호와 함께 문제와 선택지를 출력한다."""
@@ -21,6 +23,10 @@ class Quiz:
     def is_correct(self, user_answer):
         """사용자가 고른 번호가 정답이면 True, 아니면 False를 반환한다."""
         return user_answer == self.answer
+
+    def get_answer_text(self):
+        """정답 번호에 해당하는 선택지 내용을 반환한다."""
+        return self.choices[self.answer - 1]
 
     def to_dict(self):
         """state.json에 저장할 수 있도록 dict로 변환한다."""
