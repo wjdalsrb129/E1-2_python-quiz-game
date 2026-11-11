@@ -143,8 +143,29 @@ class QuizGame:
         return int(correct * 100 / total + 0.5)
 
     def add_quiz(self):
-        """퀴즈 추가 (7단계에서 구현)"""
-        print("\n🚧 퀴즈 추가 기능은 준비 중입니다.")
+        """문제, 선택지 4개, 정답 번호를 입력받아 새 퀴즈를 추가한다."""
+        print("\n📌 새로운 퀴즈를 추가합니다.\n")
+
+        question = self.get_text_input("문제를 입력하세요: ")
+
+        choices = []
+        for number in range(1, 5):
+            choice = self.get_text_input(f"선택지 {number}: ")
+            choices.append(choice)
+
+        answer = self.get_number_input("정답 번호 (1-4): ", 1, 4)
+
+        self.quizzes.append(Quiz(question, choices, answer))
+        print(f"\n✅ 퀴즈가 추가되었습니다! (현재 총 {len(self.quizzes)}개)")
+
+    def get_text_input(self, prompt):
+        """빈 값이 아닌 문자열을 입력받아 앞뒤 공백을 제거해 반환한다."""
+        while True:
+            text = input(prompt).strip()
+            if text == "":
+                print("⚠️ 입력이 비어 있습니다. 내용을 입력하세요.")
+                continue
+            return text
 
     def list_quizzes(self):
         """퀴즈 목록 (8단계에서 구현)"""
