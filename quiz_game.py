@@ -67,15 +67,19 @@ class QuizGame:
     # 2. 퀴즈 기능 (풀기 / 추가 / 목록 / 점수 확인)
     # ------------------------------------------------------------
     def play_quiz(self):
-        """저장된 퀴즈를 무작위 순서로 출제하고, 결과와 최고 점수 갱신 여부를 알려 준다."""
+        """풀 문제 수를 입력받아 무작위로 출제하고, 결과와 최고 점수 갱신 여부를 알려 준다.
+
+        최고 점수는 등록된 전체 문제를 풀었을 때만 갱신한다.
+        """
         if not self.quizzes:
             print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
             return
 
-        quizzes = self.quizzes[:]  # 원본 목록의 순서는 바꾸지 않도록 복사본을 섞는다
-        random.shuffle(quizzes)
+        quiz_count = len(self.quizzes)
+        total = self.get_number_input(f"\n몇 문제를 풀까요? (1-{quiz_count}): ", 1, quiz_count)
 
-        total = len(quizzes)
+        # 원본 목록은 그대로 두고, 무작위 순서로 total개를 뽑는다
+        quizzes = random.sample(self.quizzes, total)
         correct = 0
 
         print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제, 랜덤 순서)")
@@ -85,10 +89,15 @@ class QuizGame:
                 correct += 1
 
         score = self.calculate_score(correct, total)
-        is_new_record = self.update_best_score(score, correct, total)
-        if is_new_record:
-            self.save_state()
-        self.show_result(score, correct, total, is_new_record)
+        is_full_round = total == quiz_count
+
+        is_new_record = False
+        if is_full_round:
+            is_new_record = self.update_best_score(score, correct, total)
+            if is_new_record:
+                self.save_state()
+
+        self.show_result(score, correct, total, is_new_record, is_full_round)
 
     def ask_question(self, number, quiz):
         """문제 1개를 출제하고 정답을 입력받아, 맞혔으면 True를 반환한다."""
@@ -104,13 +113,15 @@ class QuizGame:
         print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {quiz.get_answer_text()}입니다.")
         return False
 
-    def show_result(self, score, correct, total, is_new_record):
+    def show_result(self, score, correct, total, is_new_record, is_full_round):
         """퀴즈 결과를 출력한다."""
         print()
         print(LINE)
         print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
         if is_new_record:
             print("🎉 새로운 최고 점수입니다!")
+        if not is_full_round:
+            print("ℹ️ 전체 문제를 풀었을 때만 최고 점수에 반영됩니다.")
         print(LINE)
 
     def add_quiz(self):
