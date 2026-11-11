@@ -125,6 +125,23 @@ class QuizGame:
                 answer_text = quiz.choices[quiz.answer - 1]
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번 {answer_text}입니다.")
 
+        score = self.calculate_score(correct, total)
+
+        print()
+        print(LINE)
+        print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
+        print(LINE)
+
+    def calculate_score(self, correct, total):
+        """맞힌 개수와 전체 문제 수로 100점 만점 점수를 계산한다.
+
+        정답률 × 100을 사사오입 반올림한 정수를 반환한다.
+        (Python의 round()는 .5를 짝수 쪽으로 보내므로 사용하지 않는다.)
+        """
+        if total == 0:
+            return 0
+        return int(correct * 100 / total + 0.5)
+
     def add_quiz(self):
         """퀴즈 추가 (7단계에서 구현)"""
         print("\n🚧 퀴즈 추가 기능은 준비 중입니다.")
