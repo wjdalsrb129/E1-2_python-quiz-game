@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 .vscode/
 Thumbs.db
+
+state.json.bak
+state.json.tmp

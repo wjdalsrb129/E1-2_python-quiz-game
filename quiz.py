@@ -38,5 +38,22 @@ class Quiz:
 
     @classmethod
     def from_dict(cls, data):
-        """state.json에서 읽어 온 dict로 Quiz 객체를 만든다."""
-        return cls(data["question"], data["choices"], data["answer"])
+        """state.json에서 읽어 온 dict로 Quiz 객체를 만든다.
+
+        값의 형식이 올바르지 않으면 ValueError를 발생시킨다.
+        """
+        question = data["question"]
+        choices = data["choices"]
+        answer = data["answer"]
+
+        if not isinstance(question, str) or question.strip() == "":
+            raise ValueError("문제가 올바르지 않습니다.")
+        if not isinstance(choices, list) or len(choices) != CHOICE_COUNT:
+            raise ValueError(f"선택지는 {CHOICE_COUNT}개여야 합니다.")
+        for choice in choices:
+            if not isinstance(choice, str) or choice.strip() == "":
+                raise ValueError("선택지가 올바르지 않습니다.")
+        if type(answer) is not int or not 1 <= answer <= CHOICE_COUNT:
+            raise ValueError(f"정답 번호는 1~{CHOICE_COUNT} 사이의 정수여야 합니다.")
+
+        return cls(question, choices, answer)

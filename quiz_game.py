@@ -7,6 +7,9 @@ from quiz import CHOICE_COUNT, Quiz
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_QUIZ_PATH = BASE_DIR / "default_quizzes.json"
+STATE_PATH = BASE_DIR / "state.json"
+BACKUP_PATH = BASE_DIR / "state.json.bak"
+TEMP_PATH = BASE_DIR / "state.json.tmp"
 
 LINE = "=" * 40
 SEPARATOR = "-" * 40
@@ -15,13 +18,14 @@ MENU_MAX = 5
 
 
 class QuizGame:
-    """메뉴 진행, 퀴즈 기능, 점수 기록, 입력 처리, 데이터 불러오기를 담당하는 클래스"""
+    """메뉴 진행, 퀴즈 기능, 점수 기록, 입력 처리, 데이터 저장/불러오기를 담당하는 클래스"""
 
     def __init__(self):
-        self.quizzes = self.load_default_quizzes()
+        self.quizzes = []
         self.best_score = 0
         self.best_correct = 0
         self.best_total = 0
+        self.load_state()
 
     # ------------------------------------------------------------
     # 1. 메뉴 진행
@@ -41,6 +45,7 @@ class QuizGame:
             elif choice == 4:
                 self.show_score()
             elif choice == 5:
+                self.save_state()
                 print("\n👋 프로그램을 종료합니다.")
                 break
 
@@ -77,6 +82,8 @@ class QuizGame:
 
         score = self.calculate_score(correct, total)
         is_new_record = self.update_best_score(score, correct, total)
+        if is_new_record:
+            self.save_state()
         self.show_result(score, correct, total, is_new_record)
 
     def ask_question(self, number, quiz):
@@ -116,6 +123,7 @@ class QuizGame:
         answer = self.get_number_input(f"정답 번호 (1-{CHOICE_COUNT}): ", 1, CHOICE_COUNT)
 
         self.quizzes.append(Quiz(question, choices, answer))
+        self.save_state()
         print(f"\n✅ 퀴즈가 추가되었습니다! (현재 총 {len(self.quizzes)}개)")
 
     def list_quizzes(self):
@@ -222,9 +230,96 @@ class QuizGame:
 
         except FileNotFoundError:
             print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 찾을 수 없습니다.")
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError):
             print("⚠️ 기본 퀴즈 파일(default_quizzes.json)이 손상되어 읽을 수 없습니다.")
         except OSError:
             print("⚠️ 기본 퀴즈 파일(default_quizzes.json)을 읽는 중 오류가 발생했습니다.")
 
         return []
+
+    def load_state(self):
+        """state.json에서 퀴즈 목록과 최고 점수를 불러온다.
+
+        - 파일이 없으면(첫 실행) 기본 퀴즈로 시작한다.
+        - 파일이 손상되었으면 state.json.bak으로 백업한 뒤 기본 퀴즈로 복구한다.
+        - 파일을 읽을 수 없으면(권한 문제 등) 기본 퀴즈로 시작하되 파일은 건드리지 않는다.
+        """
+        if not STATE_PATH.exists():
+            print("📂 저장된 데이터가 없어 기본 퀴즈로 시작합니다.")
+            self.quizzes = self.load_default_quizzes()
+            return
+
+        try:
+            with open(STATE_PATH, "r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            quizzes = []
+            for item in data["quizzes"]:
+                quizzes.append(Quiz.from_dict(item))
+
+            best_score = data["best_score"]
+            best_correct = data["best_correct"]
+            best_total = data["best_total"]
+            self.validate_best_record(best_score, best_correct, best_total)
+
+        except (ValueError, KeyError, TypeError):
+            # ValueError에는 JSON 문법 오류(JSONDecodeError)와 인코딩 오류도 포함된다.
+            print("⚠️ 저장 파일(state.json)이 손상되었습니다.")
+            self.backup_broken_state()
+            print("🔄 기본 퀴즈 데이터로 복구합니다.")
+            self.quizzes = self.load_default_quizzes()
+            self.save_state()
+            return
+
+        except OSError:
+            print("⚠️ 저장 파일(state.json)을 읽을 수 없어 기본 퀴즈로 시작합니다.")
+            self.quizzes = self.load_default_quizzes()
+            return
+
+        self.quizzes = quizzes
+        self.best_score = best_score
+        self.best_correct = best_correct
+        self.best_total = best_total
+        print(
+            f"📂 저장된 데이터를 불러왔습니다. "
+            f"(퀴즈 {len(self.quizzes)}개, 최고 점수 {self.best_score}점)"
+        )
+
+    def validate_best_record(self, best_score, best_correct, best_total):
+        """최고 점수 기록 값이 올바른지 확인하고, 아니면 ValueError를 발생시킨다."""
+        for value in (best_score, best_correct, best_total):
+            if type(value) is not int or value < 0:
+                raise ValueError("최고 점수 기록은 0 이상의 정수여야 합니다.")
+        if best_score > 100 or best_correct > best_total:
+            raise ValueError("최고 점수 기록의 값이 올바르지 않습니다.")
+
+    def backup_broken_state(self):
+        """손상된 state.json을 state.json.bak으로 옮겨 보관한다."""
+        try:
+            STATE_PATH.replace(BACKUP_PATH)
+            print("💾 손상된 파일은 state.json.bak으로 백업했습니다.")
+        except OSError:
+            print("⚠️ 손상된 파일을 백업하지 못했습니다.")
+
+    def save_state(self):
+        """퀴즈 목록과 최고 점수를 state.json에 저장한다.
+
+        임시 파일(state.json.tmp)에 먼저 쓴 뒤 state.json과 교체하여,
+        저장 도중 오류가 나도 기존 state.json이 손상되지 않도록 한다.
+        저장에 성공하면 True, 실패하면 False를 반환한다.
+        """
+        data = {
+            "quizzes": [quiz.to_dict() for quiz in self.quizzes],
+            "best_score": self.best_score,
+            "best_correct": self.best_correct,
+            "best_total": self.best_total,
+        }
+
+        try:
+            with open(TEMP_PATH, "w", encoding="utf-8") as file:
+                json.dump(data, file, ensure_ascii=False, indent=4)
+            TEMP_PATH.replace(STATE_PATH)
+            return True
+        except OSError:
+            print("⚠️ 데이터를 저장하지 못했습니다. (state.json 쓰기 오류)")
+            return False
