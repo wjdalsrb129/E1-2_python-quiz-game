@@ -280,10 +280,12 @@ class QuizGame:
         self.best_score = best_score
         self.best_correct = best_correct
         self.best_total = best_total
-        print(
-            f"📂 저장된 데이터를 불러왔습니다. "
-            f"(퀴즈 {len(self.quizzes)}개, 최고 점수 {self.best_score}점)"
-        )
+        
+        if self.best_total == 0:
+            score_text = "최고 점수 기록 없음"
+        else:
+            score_text = f"최고 점수 {self.best_score}점"
+        print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, {score_text})")
 
     def validate_best_record(self, best_score, best_correct, best_total):
         """최고 점수 기록 값이 올바른지 확인하고, 아니면 ValueError를 발생시킨다."""
