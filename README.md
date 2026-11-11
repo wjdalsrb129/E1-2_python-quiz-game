@@ -286,6 +286,13 @@ E1-2_python-quiz-game/
 
 - 이 섹션은 복제본에서 작성되어, pull을 통해 기존 작업 폴더에 반영된 내용
 
+
+#### clone 실행 화면
+![clone](docs/screenshots/clone.png)
+
+#### pull 실행 화면
+![pull](docs/screenshots/pull.png)
+
 ### 커밋 그래프
 
 > 작성 예정
