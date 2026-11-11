@@ -1,6 +1,7 @@
 """퀴즈 게임 전체를 관리하는 QuizGame 클래스"""
 
 import json
+import random
 from pathlib import Path
 
 from quiz import CHOICE_COUNT, Quiz
@@ -66,17 +67,20 @@ class QuizGame:
     # 2. 퀴즈 기능 (풀기 / 추가 / 목록 / 점수 확인)
     # ------------------------------------------------------------
     def play_quiz(self):
-        """저장된 퀴즈를 순서대로 출제하고, 결과와 최고 점수 갱신 여부를 알려 준다."""
+        """저장된 퀴즈를 무작위 순서로 출제하고, 결과와 최고 점수 갱신 여부를 알려 준다."""
         if not self.quizzes:
             print("\n⚠️ 등록된 퀴즈가 없습니다. 먼저 퀴즈를 추가해 주세요.")
             return
 
-        total = len(self.quizzes)
+        quizzes = self.quizzes[:]  # 원본 목록의 순서는 바꾸지 않도록 복사본을 섞는다
+        random.shuffle(quizzes)
+
+        total = len(quizzes)
         correct = 0
 
-        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
+        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제, 랜덤 순서)")
 
-        for number, quiz in enumerate(self.quizzes, start=1):
+        for number, quiz in enumerate(quizzes, start=1):
             if self.ask_question(number, quiz):
                 correct += 1
 
